@@ -28,15 +28,25 @@ public class MyTelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        System.out.println("Получено обновление: " + update);
-
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
+            String messageText = update.getMessage().getText().trim();
             long chatId = update.getMessage().getChatId();
 
-            SendMessage message = new SendMessage();
-            message.setChatId(String.valueOf(chatId));
-            message.setText("Вы написали: " + messageText);
+            String replyText;
+
+            switch (messageText) {
+                case "/start" -> replyText = "Привет! Я Telegram-бот. Напиши /help, чтобы узнать, что я умею.";
+                case "/help" -> replyText = """
+                Доступные команды:
+                /start — начать работу с ботом
+                /help — список команд
+                /time — текущее время
+                """;
+                case "/time" -> replyText = "Текущее время: " + java.time.LocalTime.now().withNano(0);
+                default -> replyText = "Неизвестная команда. Напиши /help.";
+            }
+
+            SendMessage message = new SendMessage(String.valueOf(chatId), replyText);
 
             try {
                 execute(message);
