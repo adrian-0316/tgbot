@@ -36,6 +36,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         return botToken;
     }
 
+
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {

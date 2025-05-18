@@ -1,5 +1,7 @@
 package com.example.telegrambot.handler;
 
+import com.example.telegrambot.service.FactService;
+import com.example.telegrambot.service.JokeService;
 import com.example.telegrambot.service.WeatherService;
 import org.springframework.stereotype.Component;
 
@@ -7,9 +9,13 @@ import org.springframework.stereotype.Component;
 public class CommandHandler {
 
     private final WeatherService weatherService;
+    private final FactService factService;
+    private final JokeService jokeService;
 
-    public CommandHandler(WeatherService weatherService) {
+    public CommandHandler(WeatherService weatherService, FactService factService, JokeService jokeService) {
         this.weatherService = weatherService;
+        this.factService = factService;
+        this.jokeService = jokeService;
     }
 
     public String handle(String messageText) {
@@ -29,8 +35,13 @@ public class CommandHandler {
                     /help — список команд
                     /time — текущее время
                     /weather [город] — погода
+                    /joke — случайная шутка
+                    /fact — интересный факт
                     """;
             case "/time" -> "Текущее время: " + java.time.LocalTime.now().withNano(0);
+            case "/Я_Алиса_Бакуш" -> "Я тебя сильно люблю";
+            case "/joke" -> jokeService.getJoke();
+            case "/fact" -> factService.getFact();
             case "/weather" -> {
                 if (arg.isEmpty()) {
                     yield "Укажи город. Пример: /weather Москва";
