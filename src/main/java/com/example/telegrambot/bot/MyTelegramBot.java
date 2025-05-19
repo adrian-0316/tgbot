@@ -15,8 +15,6 @@ public class MyTelegramBot extends TelegramLongPollingBot {
     private final String botToken;
     private final CommandHandler commandHandler;
 
-    private long currentUserId;
-
     public MyTelegramBot(
             @Value("${telegram.bot.username}") String botUsername,
             @Value("${telegram.bot.token}") String botToken,
@@ -38,18 +36,15 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         return botToken;
     }
 
-    public long getCurrentUserId() {
-        return currentUserId;
-    }
 
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
-            currentUserId = update.getMessage().getFrom().getId(); // сохраняем ID пользователя
+            long userId = update.getMessage().getFrom().getId();
 
-            String reply = commandHandler.handle(messageText);
+            String reply = commandHandler.handle(messageText, userId); // 👈 передаём userId
             sendMessage(String.valueOf(chatId), reply);
         }
     }

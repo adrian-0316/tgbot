@@ -1,6 +1,6 @@
 package com.example.telegrambot.handler;
 
-import com.example.telegrambot.bot.MyTelegramBot;
+
 import com.example.telegrambot.service.FactService;
 import com.example.telegrambot.service.JokeService;
 import com.example.telegrambot.service.RequestLimiterService;
@@ -14,17 +14,15 @@ public class CommandHandler {
     private final FactService factService;
     private final JokeService jokeService;
     private final RequestLimiterService requestLimiterService;
-    private final MyTelegramBot myTelegramBot;
 
-    public CommandHandler(WeatherService weatherService, FactService factService, JokeService jokeService, RequestLimiterService requestLimiterService, MyTelegramBot myTelegramBot) {
+    public CommandHandler(WeatherService weatherService, FactService factService, JokeService jokeService, RequestLimiterService requestLimiterService) {
         this.weatherService = weatherService;
         this.factService = factService;
         this.jokeService = jokeService;
         this.requestLimiterService = requestLimiterService;
-        this.myTelegramBot = myTelegramBot;
     }
 
-    public String handle(String messageText) {
+    public String handle(String messageText, long userId) {
         if (messageText == null || messageText.isBlank()) {
             return "Пустое сообщение.";
         }
@@ -36,18 +34,17 @@ public class CommandHandler {
         return switch (command) {
             case "/start" -> "Привет! Я Telegram-бот. Напиши /help, чтобы узнать, что я умею.";
             case "/help" -> """
-                    Доступные команды:
-                    /start — начать работу с ботом
-                    /help — список команд
-                    /time — текущее время
-                    /weather [город] — погода
-                    /joke — случайная шутка
-                    /fact — интересный факт
-                    """;
+                Доступные команды:
+                /start — начать работу с ботом
+                /help — список команд
+                /time — текущее время
+                /weather [город] — погода
+                /joke — случайная шутка
+                /fact — интересный факт
+                """;
             case "/time" -> "Текущее время: " + java.time.LocalTime.now().withNano(0);
             case "/Я_Алиса_Бакуш" -> "Я тебя сильно люблю";
             case "/joke" -> {
-                long userId = myTelegramBot.getCurrentUserId(); // Нужно получить ID пользователя
                 if (requestLimiterService.canRequestJoke(userId)) {
                     requestLimiterService.updateJokeRequestTime(userId);
                     yield jokeService.getJoke();
@@ -56,7 +53,6 @@ public class CommandHandler {
                 }
             }
             case "/fact" -> {
-                long userId = myTelegramBot.getCurrentUserId();
                 if (requestLimiterService.canRequestFact(userId)) {
                     requestLimiterService.updateFactRequestTime(userId);
                     yield factService.getFact();
