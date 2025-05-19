@@ -1,7 +1,9 @@
 package com.example.telegrambot.handler;
 
+import com.example.telegrambot.bot.MyTelegramBot;
 import com.example.telegrambot.service.FactService;
 import com.example.telegrambot.service.JokeService;
+import com.example.telegrambot.service.RequestLimiterService;
 import com.example.telegrambot.service.WeatherService;
 import org.springframework.stereotype.Component;
 
@@ -11,11 +13,15 @@ public class CommandHandler {
     private final WeatherService weatherService;
     private final FactService factService;
     private final JokeService jokeService;
+    private final RequestLimiterService requestLimiterService;
+    private final MyTelegramBot myTelegramBot;
 
-    public CommandHandler(WeatherService weatherService, FactService factService, JokeService jokeService) {
+    public CommandHandler(WeatherService weatherService, FactService factService, JokeService jokeService, RequestLimiterService requestLimiterService, MyTelegramBot myTelegramBot) {
         this.weatherService = weatherService;
         this.factService = factService;
         this.jokeService = jokeService;
+        this.requestLimiterService = requestLimiterService;
+        this.myTelegramBot = myTelegramBot;
     }
 
     public String handle(String messageText) {
@@ -40,8 +46,24 @@ public class CommandHandler {
                     """;
             case "/time" -> "Текущее время: " + java.time.LocalTime.now().withNano(0);
             case "/Я_Алиса_Бакуш" -> "Я тебя сильно люблю";
-            case "/joke" -> jokeService.getJoke();
-            case "/fact" -> factService.getFact();
+            case "/joke" -> {
+                long userId = myTelegramBot.getCurrentUserId(); // Нужно получить ID пользователя
+                if (requestLimiterService.canRequestJoke(userId)) {
+                    requestLimiterService.updateJokeRequestTime(userId);
+                    yield jokeService.getJoke();
+                } else {
+                    yield "😅 Только одна шутка в день! Попробуй завтра.";
+                }
+            }
+            case "/fact" -> {
+                long userId = myTelegramBot.getCurrentUserId();
+                if (requestLimiterService.canRequestFact(userId)) {
+                    requestLimiterService.updateFactRequestTime(userId);
+                    yield factService.getFact();
+                } else {
+                    yield "📚 Только один факт в день! Попробуй завтра.";
+                }
+            }
             case "/weather" -> {
                 if (arg.isEmpty()) {
                     yield "Укажи город. Пример: /weather Москва";
